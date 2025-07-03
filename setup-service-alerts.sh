@@ -11,6 +11,10 @@ SERVICE="$1"
 WEBHOOK_URL="$2"
 ENV_NAME="$3"
 
+sudo mkdir -p /var/lib/service-alerts
+sudo chown root:root /var/lib/service-alerts
+sudo chmod 777 /var/lib/service-alerts
+
 mkdir -p /usr/local/bin
 
 cat <<EOF >/usr/local/bin/service-stop-alert.sh
@@ -20,8 +24,8 @@ HOST=\$(hostname)
 TIME=\$(date '+%Y-%m-%d %H:%M:%S')
 ENV_NAME="$ENV_NAME"
 
-echo "\$TIME" > /run/service-last-stop-\$SERVICE.time
-echo "\$SERVICE_RESULT" > /run/service-last-stop-\$SERVICE.reason
+echo "\$TIME" > /var/lib/service-alerts/service-last-stop-\$SERVICE.time
+echo "\$SERVICE_RESULT" > /var/lib/service-alerts/service-last-stop-\$SERVICE.reason
 
 if [[ "\$SERVICE_RESULT" == "success" || -z "\$SERVICE_RESULT" ]]; then
     RESTART_TYPE="manually stopped"
@@ -43,8 +47,8 @@ HOST=\$(hostname)
 TIME=\$(date '+%Y-%m-%d %H:%M:%S')
 ENV_NAME="$ENV_NAME"
 
-STOP_TIME_FILE="/run/service-last-stop-\$SERVICE.time"
-STOP_REASON_FILE="/run/service-last-stop-\$SERVICE.reason"
+STOP_TIME_FILE="/var/lib/service-alerts/service-last-stop-\$SERVICE.time"
+STOP_REASON_FILE="/var/lib/service-alerts/service-last-stop-\$SERVICE.reason"
 
 if [[ -f "\$STOP_TIME_FILE" && -f "\$STOP_REASON_FILE" ]]; then
     STOP_TIME=\$(cat "\$STOP_TIME_FILE")
@@ -72,9 +76,6 @@ chmod +x /usr/local/bin/service-start-post.sh
 mkdir -p /etc/systemd/system/$SERVICE.service.d
 
 cat <<EOF >/etc/systemd/system/$SERVICE.service.d/override.conf
-[Unit]
-OnFailure=service-failure-alert@%n
-
 [Service]
 Restart=on-failure
 RestartSec=5
