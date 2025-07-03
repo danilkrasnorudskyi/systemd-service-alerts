@@ -99,6 +99,12 @@ This script sets up automatic alerts for a specified systemd service on Ubuntu, 
   ```
 
 - Test curl command manually with your webhook URL
+- If a reason missed in a message than check "ReadWriteDirectories" in service systemd config, for example redis /etc/systemd/system/redis-server.service.d/override.conf:
+  ```
+  [Service]
+  ...
+  ReadWriteDirectories=-/var/lib/service-alerts  # add this line to ensure the Redis service has write access to the alerts folder
+  ```
 
 ---
 
