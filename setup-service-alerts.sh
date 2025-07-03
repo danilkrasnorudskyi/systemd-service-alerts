@@ -18,9 +18,14 @@ cat <<EOF >/usr/local/bin/service-stop-alert.sh
 SERVICE="\$1"
 HOST=\$(hostname)
 TIME=\$(date '+%Y-%m-%d %H:%M:%S')
+ENV_NAME="$ENV_NAME"
 
 echo "\$TIME" > /run/service-last-stop-\$SERVICE.time
 echo "\$SERVICE_RESULT" > /run/service-last-stop-\$SERVICE.reason
+
+MESSAGE=":alert: Service *\$SERVICE* on \$HOST (\$ENV_NAME) has been *stopped* at \$TIME (reason: \$SERVICE_RESULT)."
+
+curl -s -X POST -H 'Content-type: application/json' --data "{\"text\":\"\$MESSAGE\"}" "$WEBHOOK_URL"
 EOF
 
 chmod +x /usr/local/bin/service-stop-alert.sh
@@ -49,7 +54,7 @@ else
     RESTART_TYPE="automatically restarted after failure"
 fi
 
-MESSAGE="⚠️ Service *\$SERVICE* was \$RESTART_TYPE on \$HOST (\$ENV_NAME) at \$TIME (previous stop at \$STOP_TIME with reason: \$STOP_REASON)"
+MESSAGE=":large_green_circle: Service *\$SERVICE* was \$RESTART_TYPE on \$HOST (\$ENV_NAME) at \$TIME (previous stop at \$STOP_TIME with reason: \$STOP_REASON)"
 
 curl -s -X POST -H 'Content-type: application/json' --data "{\"text\":\"\$MESSAGE\"}" "$WEBHOOK_URL"
 
