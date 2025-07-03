@@ -23,7 +23,13 @@ ENV_NAME="$ENV_NAME"
 echo "\$TIME" > /run/service-last-stop-\$SERVICE.time
 echo "\$SERVICE_RESULT" > /run/service-last-stop-\$SERVICE.reason
 
-MESSAGE=":alert: Service *\$SERVICE* on *\$ENV_NAME* has been *stopped* at *\$TIME* (reason: \$SERVICE_RESULT). Host: \$HOST"
+if [[ "\$SERVICE_RESULT" == "success" || -z "\$SERVICE_RESULT" ]]; then
+    RESTART_TYPE="manually stopped"
+else
+    RESTART_TYPE="stopped on failure"
+fi
+
+MESSAGE=":alert: Service *\$SERVICE* on *\$ENV_NAME* was \$RESTART_TYPE at *\$TIME* (reason: \$SERVICE_RESULT). Host: \$HOST"
 
 curl -s -X POST -H 'Content-type: application/json' --data "{\"text\":\"\$MESSAGE\"}" "$WEBHOOK_URL"
 EOF
