@@ -89,7 +89,7 @@ fi
 
 mkdir -p "$(dirname "$CONFIG_FILE")"
 
-cat <<EOF >CONFIG_FILE
+cat <<EOF >"$CONFIG_FILE"
 [Service]
 Restart=on-failure
 RestartSec=5
