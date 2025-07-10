@@ -111,7 +111,6 @@ else
         echo "\n[Service]" >>"$CONFIG_FILE"
         echo "$SETTINGS" >>"$CONFIG_FILE"
         echo "Added [Service] section with settings"
-        exit 0
     fi
 
     # For each setting, check if it exists in [Service], else append
