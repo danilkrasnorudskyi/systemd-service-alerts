@@ -73,15 +73,36 @@ EOF
 
 chmod +x /usr/local/bin/service-start-post.sh
 
-mkdir -p /etc/systemd/system/$SERVICE.service.d
+CONFIG_FILE="/etc/systemd/system/$SERVICE.service.d/override.conf"
+mkdir -p "$(dirname "$CONFIG_FILE")"
 
-cat <<EOF >/etc/systemd/system/$SERVICE.service.d/override.conf
-[Service]
-Restart=on-failure
-RestartSec=5
-ExecStopPost=/usr/local/bin/service-stop-alert.sh %n
-ExecStartPost=/usr/local/bin/service-start-post.sh %n
-EOF
+declare -A SETTINGS
+SETTINGS["Restart"]="on-failure"
+SETTINGS["RestartSec"]="5"
+SETTINGS["ExecStopPost"]="/usr/local/bin/service-stop-alert.sh %n"
+SETTINGS["ExecStartPost"]="/usr/local/bin/service-start-post.sh %n"
+
+if [[ "$SERVICE" == *redis* ]]; then
+    SETTINGS["ReadWriteDirectories"]="-/var/lib/service-alerts"
+fi
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo -e "[Service]" >"$CONFIG_FILE"
+    echo "Created $CONFIG_FILE with [Service] header"
+elif ! grep -q '^\[Service\]' "$CONFIG_FILE"; then
+    echo -e "\n[Service]" >>"$CONFIG_FILE"
+    echo "Added [Service] header to $CONFIG_FILE"
+fi
+
+for KEY in "${!SETTINGS[@]}"; do
+    VALUE="${SETTINGS[$KEY]}"
+    if grep -Eq "^\s*${KEY}=" "$CONFIG_FILE"; then
+        echo "Setting ${KEY} already exists in $CONFIG_FILE, skipping."
+    else
+        echo "${KEY}=${VALUE}" >>"$CONFIG_FILE"
+        echo "Appended ${KEY}=${VALUE} to $CONFIG_FILE"
+    fi
+done
 
 systemctl daemon-reload
 systemctl restart $SERVICE
